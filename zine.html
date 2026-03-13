@@ -175,6 +175,65 @@
 
         #subscribe-bar a:hover { opacity: 0.88; }
 
+        #flip-btn {
+            display: inline-block;
+            background: transparent;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+            width: auto;
+        }
+
+        #flip-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            padding: 2px;
+            background: linear-gradient(135deg, #ff66c4, #5170ff, #ff66c4);
+            background-size: 200% 200%;
+            animation: borderShine 3s linear infinite;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        #flip-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2.5s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes borderShine {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #flip-btn:hover { opacity: 0.85; }
+
+        #cut-line {
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            letter-spacing: 3px;
+            user-select: none;
+            width: 100%;
+            text-align: center;
+            margin-top: 8px;
+        }
+
         .social-footer {
             display: flex;
             justify-content: center;
@@ -221,6 +280,8 @@
     </div>
 
     <div id="subscribe-bar">
+        <button id="flip-btn" onclick="handleFlip()">unfold &amp; see the reverse ✨</button>
+        <div id="cut-line">✂ - - - - ✂ - - - - ✂ - - - - ✂</div>
         <a href="https://raw.githubusercontent.com/365hockeygirl/pwhl-rules-zine/main/rules_zine_final.pdf" download="PWHL-Rules-Zine.pdf" target="_blank" rel="noopener">download the zine 📄</a>
         <a href="https://365hockeygirl.beehiiv.com/subscribe?utm_source=digital-zine&utm_medium=zine&utm_campaign=pwhl-rules-zine" target="_blank" rel="noopener">subscribe to my newsletter 💌</a>
     </div>
@@ -247,81 +308,90 @@ const ALT      = "What's Going On? A PWHL Rules Zine";
 const SMOOTH   = false;
 
 // ============================================================
-// IMAGE BASE URL — update if you rename your repo/branch
-// ============================================================
-const BASE_URL = 'https://raw.githubusercontent.com/365hockeygirl/pwhl-rules-zine/main/pages/';
-
-// ============================================================
 // Zine reader
 // ============================================================
 const FOV = 45;
-const LOADING_OVERLAY = document.querySelector('#loading');
-const ZINE_CONTAINER  = document.querySelector('#zine-container');
+const REPO_BASE = 'https://raw.githubusercontent.com/365hockeygirl/pwhl-rules-zine/main/';
+const ZINE_CONTAINER = document.querySelector('#zine-container');
 let card_amount;
 let current_state = 0;
-let textures = [];
 let pages = [];
+let activeFolder = 'pages';
 
 document.body.ariaLabel = ALT;
 document.body.style.imageRendering = SMOOTH ? 'auto' : 'pixelated';
 
-function getTextures(num) {
-    return [BASE_URL + 'FRONT.png', BASE_URL + 'INNERFRONT.png'].concat(
-        new Array(num).fill().map((_, idx) => BASE_URL + (idx + 1) + '.png'),
-        [BASE_URL + 'BACK.png']
+function getTextures(folder) {
+    const base = REPO_BASE + folder + '/';
+    const inner = { 1:5, 2:9, 3:11, 4:13, 5:21, 6:23, 7:29, 8:61 }[TEMPLATE] || 5;
+    card_amount  = { 1:4, 2:6, 3:7,  4:8,  5:12, 6:13, 7:16, 8:32 }[TEMPLATE] || 4;
+    return [base + 'FRONT.png', base + 'INNERFRONT.png'].concat(
+        new Array(inner).fill().map((_, i) => base + (i + 1) + '.png'),
+        [base + 'BACK.png']
     );
 }
 
-switch (TEMPLATE) {
-    default:
-    case 1: card_amount = 4;  textures = getTextures(5);  break;
-    case 2: card_amount = 6;  textures = getTextures(9);  break;
-    case 3: card_amount = 7;  textures = getTextures(11); break;
-    case 4: card_amount = 8;  textures = getTextures(13); break;
-    case 5: card_amount = 12; textures = getTextures(21); break;
-    case 6: card_amount = 13; textures = getTextures(23); break;
-    case 7: card_amount = 16; textures = getTextures(29); break;
-    case 8: card_amount = 32; textures = getTextures(61); break;
+function loadZine(folder) {
+    ZINE_CONTAINER.innerHTML = '<div id="loading">loading zine...</div>';
+    current_state = 0;
+    pages = [];
+
+    const textures = getTextures(folder);
+
+    Promise.all(
+        textures.map(src =>
+            new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+                img.alt = src.split('/').pop().split('.')[0];
+            })
+        )
+    )
+    .then(imgs => {
+        ZINE_CONTAINER.innerHTML = '';
+        const list = document.createElement('ul');
+        list.ariaHidden = true;
+        pages = imgs.map((img, idx) => {
+            const li = document.createElement('li');
+            const flip = idx % 2;
+            li.className = 'depth-' + Math.min(2, idx);
+            li.style.transform = 'translateX(100%) rotateY(0deg) scaleZ(' + (flip ? -1 : 1) + ')';
+            li.appendChild(img);
+            list.appendChild(li);
+            return li;
+        });
+        ZINE_CONTAINER.appendChild(list);
+
+        function updatePerspective() {
+            const w = ZINE_CONTAINER.offsetWidth;
+            const h = ZINE_CONTAINER.offsetHeight;
+            list.style.perspective = Math.sqrt(((w/2)*w)/2 + ((h/2)*h)/2) / Math.tan(((FOV/2)*Math.PI)/180) + 'px';
+        }
+        window.addEventListener('resize', updatePerspective);
+        updatePerspective();
+
+        activeFolder = folder;
+        const btn = document.getElementById('flip-btn');
+        btn.textContent = folder === 'pages' ? 'unfold & see the reverse ✨' : 'flip back to the front ✨';
+    })
+    .catch(err => {
+        console.error(err);
+        ZINE_CONTAINER.innerHTML = '<div id="loading">Something went wrong! Make sure your images are in the pages folder.</div>';
+    });
 }
 
-Promise.all(
-    textures.map(src =>
-        new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = src;
-            img.alt = src.split('/').pop().split('.')[0];
-        })
-    )
-)
-.then(imgs => {
-    LOADING_OVERLAY.remove();
-    const list = document.createElement('ul');
-    list.ariaHidden = true;
-    pages = imgs.map((img, idx) => {
-        const li = document.createElement('li');
-        const flip = idx % 2;
-        li.className = 'depth-' + Math.min(2, idx);
-        li.style.transform = 'translateX(100%) rotateY(0deg) scaleZ(' + (flip ? -1 : 1) + ')';
-        li.appendChild(img);
-        list.appendChild(li);
-        return li;
-    });
-    ZINE_CONTAINER.appendChild(list);
-
-    function updatePerspective() {
-        const w = ZINE_CONTAINER.offsetWidth;
-        const h = ZINE_CONTAINER.offsetHeight;
-        list.style.perspective = Math.sqrt(((w/2)*w)/2 + ((h/2)*h)/2) / Math.tan(((FOV/2)*Math.PI)/180) + 'px';
+function handleFlip() {
+    if (activeFolder !== 'pages') {
+        loadZine('pages');
+    } else {
+        loadZine(Math.random() < 0.5 ? 'pages-red' : 'pages-blue');
     }
-    window.addEventListener('resize', updatePerspective);
-    updatePerspective();
-})
-.catch(error => {
-    console.error(error);
-    LOADING_OVERLAY.textContent = 'Something went wrong! Make sure your images are in the pages folder.';
-});
+}
+
+// Initial load
+loadZine('pages');
 
 document.addEventListener('keyup', function(key) {
     if (key.key === 'ArrowLeft'  || key.key === 'a') flipLeft();
