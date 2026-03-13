@@ -483,6 +483,8 @@ function loadZine(folder) {
     });
 }
 
+let lastReverse = 'blue'; // so first flip gives red
+
 function handleFlip() {
     const overlay = document.getElementById('flip-overlay');
     const overlayText = document.getElementById('flip-overlay-text');
@@ -494,7 +496,13 @@ function handleFlip() {
     sparkleRush = true;
     sparkleCanvas.style.zIndex = 101;
 
-    const next = activeFolder !== 'pages' ? 'pages' : (Math.random() < 0.5 ? 'pages-red' : 'pages-blue');
+    let next;
+    if (activeFolder !== 'pages') {
+        next = 'pages';
+    } else {
+        next = lastReverse === 'blue' ? 'pages-red' : 'pages-blue';
+        lastReverse = next === 'pages-red' ? 'red' : 'blue';
+    }
 
     setTimeout(() => {
         loadZine(next);
