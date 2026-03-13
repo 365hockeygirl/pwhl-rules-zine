@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>What's Going On? A PWHL Rules Zine</title>
+    <meta property="og:title" content="What's Going On? A PWHL Rules Zine" />
+    <meta name="description" content="A zine about PWHL rules by 365 Hockey Girl" />
+    <meta property="og:description" content="A zine about PWHL rules by 365 Hockey Girl" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            background: #000;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+        }
+
+        #sparkle-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        #wrapper {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+        }
+
+        #zine-title {
+            font-family: 'Lora', serif;
+            font-size: 26px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            padding: 20px 16px 6px;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+        }
+
+        #zine-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            text-align: center;
+            padding: 0 16px 14px;
+            flex-shrink: 0;
+        }
+
+        #zine-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 600px) {
+            #zine-container {
+                padding: 0 16px;
+            }
+        }
+
+        #loading {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: rgba(255,255,255,0.7);
+            font-family: 'Lora', serif;
+            font-style: italic;
+        }
+
+        ul {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            position: absolute;
+            top: 0; right: 0; left: 0; bottom: 0;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            user-select: none;
+            perspective-origin: center;
+            perspective: 1000px;
+        }
+
+        li {
+            position: absolute;
+            top: 0; right: 0; left: 0; bottom: 0;
+            width: 50%;
+            height: 100%;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+            transform-origin: center left;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+        }
+
+        img {
+            position: absolute;
+            top: 0; right: 0; left: 0; bottom: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            object-fit: contain;
+            object-position: center left;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+        }
+
+        li:nth-child(even) img { object-position: center right; }
+        li.depth-0 img { transform: translateZ(0) scaleX(1); }
+        li:nth-child(even) img { transform: translateZ(0) scaleX(-1); }
+        li.depth-1 img { transform: translateZ(-2px) scaleX(1); }
+        li.depth-1:nth-child(even) img { transform: translateZ(-2px) scaleX(-1); }
+        li.depth-2 img { transform: translateZ(-4px) scaleX(1); }
+        li.depth-2:nth-child(even) img { transform: translateZ(-4px) scaleX(-1); }
+
+        #subscribe-bar {
+            flex-shrink: 0;
+            padding: 10px 16px 14px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #subscribe-bar a {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff66c4, #5170ff);
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #subscribe-bar a::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            animation: shimmer 2.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0%   { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        #subscribe-bar a:hover { opacity: 0.88; }
+    </style>
+</head>
+<body>
+
+<canvas id="sparkle-canvas"></canvas>
+
+<div id="wrapper">
+    <div id="zine-title">What's Going On? A PWHL Rules Zine ✨</div>
+    <div id="zine-subtitle">click a page to flip it!</div>
+
+    <div id="zine-container">
+        <div id="loading">loading zine...</div>
+    </div>
+
+    <div id="subscribe-bar">
+        <a href="https://raw.githubusercontent.com/365hockeygirl/pwhl-rules-zine/main/rules_zine_final.pdf" download="PWHL-Rules-Zine.pdf" target="_blank" rel="noopener">download the zine 📄</a>
+        <a href="https://365hockeygirl.beehiiv.com/subscribe?utm_source=digital-zine&utm_medium=zine&utm_campaign=pwhl-rules-zine" target="_blank" rel="noopener">subscribe to my newsletter 💌</a>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// SETTINGS
+// ============================================================
+const TEMPLATE = 1;   // 1=8pg, 2=12pg, 3=14pg, 4=16pg, 5=24pg, 6=26pg, 7=32pg, 8=64pg
+const ALT      = "What's Going On? A PWHL Rules Zine";
+const SMOOTH   = false;
+
+// ============================================================
+// IMAGE BASE URL — update if you rename your repo/branch
+// ============================================================
+const BASE_URL = 'https://raw.githubusercontent.com/365hockeygirl/pwhl-rules-zine/main/pages/';
+
+// ============================================================
+// Zine reader
+// ============================================================
+const FOV = 45;
+const LOADING_OVERLAY = document.querySelector('#loading');
+const ZINE_CONTAINER  = document.querySelector('#zine-container');
+let card_amount;
+let current_state = 0;
+let textures = [];
+let pages = [];
+
+document.body.ariaLabel = ALT;
+document.body.style.imageRendering = SMOOTH ? 'auto' : 'pixelated';
+
+function getTextures(num) {
+    return [BASE_URL + 'FRONT.png', BASE_URL + 'INNERFRONT.png'].concat(
+        new Array(num).fill().map((_, idx) => BASE_URL + (idx + 1) + '.png'),
+        [BASE_URL + 'BACK.png']
+    );
+}
+
+switch (TEMPLATE) {
+    default:
+    case 1: card_amount = 4;  textures = getTextures(5);  break;
+    case 2: card_amount = 6;  textures = getTextures(9);  break;
+    case 3: card_amount = 7;  textures = getTextures(11); break;
+    case 4: card_amount = 8;  textures = getTextures(13); break;
+    case 5: card_amount = 12; textures = getTextures(21); break;
+    case 6: card_amount = 13; textures = getTextures(23); break;
+    case 7: card_amount = 16; textures = getTextures(29); break;
+    case 8: card_amount = 32; textures = getTextures(61); break;
+}
+
+Promise.all(
+    textures.map(src =>
+        new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+            img.alt = src.split('/').pop().split('.')[0];
+        })
+    )
+)
+.then(imgs => {
+    LOADING_OVERLAY.remove();
+    const list = document.createElement('ul');
+    list.ariaHidden = true;
+    pages = imgs.map((img, idx) => {
+        const li = document.createElement('li');
+        const flip = idx % 2;
+        li.className = 'depth-' + Math.min(2, idx);
+        li.style.transform = 'translateX(100%) rotateY(0deg) scaleZ(' + (flip ? -1 : 1) + ')';
+        li.appendChild(img);
+        list.appendChild(li);
+        return li;
+    });
+    ZINE_CONTAINER.appendChild(list);
+
+    function updatePerspective() {
+        const w = ZINE_CONTAINER.offsetWidth;
+        const h = ZINE_CONTAINER.offsetHeight;
+        list.style.perspective = Math.sqrt(((w/2)*w)/2 + ((h/2)*h)/2) / Math.tan(((FOV/2)*Math.PI)/180) + 'px';
+    }
+    window.addEventListener('resize', updatePerspective);
+    updatePerspective();
+})
+.catch(error => {
+    console.error(error);
+    LOADING_OVERLAY.textContent = 'Something went wrong! Make sure your images are in the pages folder.';
+});
+
+document.addEventListener('keyup', function(key) {
+    if (key.key === 'ArrowLeft'  || key.key === 'a') flipLeft();
+    else if (key.key === 'ArrowRight' || key.key === 'd') flipRight();
+});
+
+document.addEventListener('pointerup', function(event) {
+    if (event.button !== 0) return;
+    if (event.clientX < window.innerWidth / 2) flipRight();
+    else flipLeft();
+});
+
+function getPages(state) {
+    return [pages[state * 2], pages[state * 2 + 1]].filter(i => i);
+}
+function replaceTransformPerPage(state, search, replace) {
+    getPages(state).forEach(page => { page.style.transform = page.style.transform.replace(search, replace); });
+}
+function setDepth(state, depth) {
+    getPages(state).forEach(page => { page.className = page.className.replace(/depth-\d+/, 'depth-' + Math.min(depth, 2)); });
+}
+function flipLeft() {
+    if (current_state >= card_amount) return;
+    replaceTransformPerPage(current_state, '0deg', '-180deg');
+    setDepth(current_state - 1, 1);
+    setDepth(current_state - 2, 2);
+    setDepth(current_state + 1, 0);
+    setDepth(current_state + 2, 1);
+    ++current_state;
+}
+function flipRight() {
+    if (current_state <= 0) return;
+    replaceTransformPerPage(current_state - 1, '-180deg', '0deg');
+    setDepth(current_state - 3, 1);
+    setDepth(current_state - 2, 0);
+    setDepth(current_state + 1, 2);
+    setDepth(current_state, 1);
+    --current_state;
+}
+
+// ============================================================
+// Sparkle animation
+// ============================================================
+const sparkleCanvas = document.getElementById('sparkle-canvas');
+const sparkleCtx    = sparkleCanvas.getContext('2d');
+let sparkles = [];
+
+function resizeCanvas() {
+    sparkleCanvas.width  = window.innerWidth;
+    sparkleCanvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function randomBetween(a, b) { return a + Math.random() * (b - a); }
+
+function createSparkle() {
+    return {
+        x: randomBetween(0, sparkleCanvas.width),
+        y: randomBetween(0, sparkleCanvas.height),
+        size: randomBetween(2, 6),
+        opacity: randomBetween(0.4, 1),
+        speedY: randomBetween(-0.4, -1.2),
+        speedX: randomBetween(-0.3, 0.3),
+        twinkleSpeed: randomBetween(0.01, 0.03),
+        twinkleDir: 1,
+        shape: Math.random() > 0.5 ? 'star' : 'dot'
+    };
+}
+
+for (let i = 0; i < 60; i++) sparkles.push(createSparkle());
+
+function drawStar(x, y, size, opacity) {
+    sparkleCtx.save();
+    sparkleCtx.translate(x, y);
+    sparkleCtx.globalAlpha = opacity;
+    sparkleCtx.fillStyle = '#fff';
+    sparkleCtx.beginPath();
+    for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2;
+        const inner = size * 0.3;
+        sparkleCtx.lineTo(Math.cos(angle) * size, Math.sin(angle) * size);
+        sparkleCtx.lineTo(Math.cos(angle + Math.PI / 4) * inner, Math.sin(angle + Math.PI / 4) * inner);
+    }
+    sparkleCtx.closePath();
+    sparkleCtx.fill();
+    sparkleCtx.restore();
+}
+
+function animateSparkles() {
+    sparkleCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+    sparkles.forEach(s => {
+        s.opacity += s.twinkleSpeed * s.twinkleDir;
+        if (s.opacity >= 1 || s.opacity <= 0.1) s.twinkleDir *= -1;
+        s.y += s.speedY;
+        s.x += s.speedX;
+        if (s.y < -10) {
+            s.y = sparkleCanvas.height + 10;
+            s.x = randomBetween(0, sparkleCanvas.width);
+        }
+        if (s.shape === 'star') {
+            drawStar(s.x, s.y, s.size, s.opacity);
+        } else {
+            sparkleCtx.save();
+            sparkleCtx.globalAlpha = s.opacity;
+            sparkleCtx.fillStyle = '#fff';
+            sparkleCtx.beginPath();
+            sparkleCtx.arc(s.x, s.y, s.size / 2, 0, Math.PI * 2);
+            sparkleCtx.fill();
+            sparkleCtx.restore();
+        }
+    });
+    requestAnimationFrame(animateSparkles);
+}
+animateSparkles();
+</script>
+</body>
+</html>
