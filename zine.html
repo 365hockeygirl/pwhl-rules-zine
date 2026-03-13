@@ -224,6 +224,45 @@
 
         #flip-btn:hover { opacity: 0.85; }
 
+        #flip-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0,0,0,0.92);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #flip-overlay.active {
+            display: flex;
+        }
+
+        #flip-overlay-text {
+            font-family: 'Lora', serif;
+            font-size: 22px;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 2px solid rgba(255,255,255,0.8);
+            width: 0;
+            max-width: calc(100vw - 48px);
+            margin: 0 auto;
+        }
+
+        #flip-overlay-text.typing {
+            animation: flipTypewriter 1.8s steps(30) 0.2s forwards, blink 0.7s step-end infinite;
+        }
+
+        @keyframes flipTypewriter {
+            from { width: 0; }
+            to   { width: 25ch; }
+        }
+
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+
         #cut-line {
             color: rgba(255,255,255,0.6);
             font-size: 16px;
@@ -274,6 +313,10 @@
 <div id="wrapper">
     <div id="zine-title">What's Going On? A PWHL Rules Zine ✨</div>
     <div id="zine-subtitle">click a page to flip it!</div>
+
+    <div id="flip-overlay">
+        <div id="flip-overlay-text">unfolding and refolding...</div>
+    </div>
 
     <div id="zine-container">
         <div id="loading">loading zine...</div>
@@ -375,6 +418,7 @@ function loadZine(folder) {
         activeFolder = folder;
         const btn = document.getElementById('flip-btn');
         btn.textContent = folder === 'pages' ? 'unfold & see the reverse ✨' : 'flip back to the front ✨';
+        hideOverlay();
     })
     .catch(err => {
         console.error(err);
@@ -383,11 +427,28 @@ function loadZine(folder) {
 }
 
 function handleFlip() {
-    if (activeFolder !== 'pages') {
-        loadZine('pages');
-    } else {
-        loadZine(Math.random() < 0.5 ? 'pages-red' : 'pages-blue');
-    }
+    const overlay = document.getElementById('flip-overlay');
+    const overlayText = document.getElementById('flip-overlay-text');
+
+    overlay.classList.add('active');
+    overlayText.classList.remove('typing');
+    void overlayText.offsetWidth;
+    overlayText.classList.add('typing');
+    sparkleRush = true;
+    sparkleCanvas.style.zIndex = 101;
+
+    const next = activeFolder !== 'pages' ? 'pages' : (Math.random() < 0.5 ? 'pages-red' : 'pages-blue');
+
+    setTimeout(() => {
+        loadZine(next);
+    }, 2200);
+}
+
+function hideOverlay() {
+    const overlay = document.getElementById('flip-overlay');
+    if (overlay) overlay.classList.remove('active');
+    sparkleRush = false;
+    sparkleCanvas.style.zIndex = 0;
 }
 
 // Initial load
@@ -438,6 +499,7 @@ function flipRight() {
 const sparkleCanvas = document.getElementById('sparkle-canvas');
 const sparkleCtx    = sparkleCanvas.getContext('2d');
 let sparkles = [];
+let sparkleRush = false;
 
 function resizeCanvas() {
     sparkleCanvas.width  = window.innerWidth;
@@ -448,21 +510,21 @@ window.addEventListener('resize', resizeCanvas);
 
 function randomBetween(a, b) { return a + Math.random() * (b - a); }
 
-function createSparkle() {
+function createSparkle(rush) {
     return {
         x: randomBetween(0, sparkleCanvas.width),
-        y: randomBetween(0, sparkleCanvas.height),
-        size: randomBetween(2, 6),
+        y: rush ? sparkleCanvas.height + 10 : randomBetween(0, sparkleCanvas.height),
+        size: rush ? randomBetween(4, 10) : randomBetween(2, 6),
         opacity: randomBetween(0.4, 1),
-        speedY: randomBetween(-0.4, -1.2),
-        speedX: randomBetween(-0.3, 0.3),
+        speedY: rush ? randomBetween(-8, -20) : randomBetween(-0.4, -1.2),
+        speedX: rush ? randomBetween(-1, 1) : randomBetween(-0.3, 0.3),
         twinkleSpeed: randomBetween(0.01, 0.03),
         twinkleDir: 1,
         shape: Math.random() > 0.5 ? 'star' : 'dot'
     };
 }
 
-for (let i = 0; i < 60; i++) sparkles.push(createSparkle());
+for (let i = 0; i < 60; i++) sparkles.push(createSparkle(false));
 
 function drawStar(x, y, size, opacity) {
     sparkleCtx.save();
@@ -483,6 +545,13 @@ function drawStar(x, y, size, opacity) {
 
 function animateSparkles() {
     sparkleCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+
+    if (sparkleRush && sparkles.length < 300) {
+        for (let i = 0; i < 8; i++) sparkles.push(createSparkle(true));
+    } else if (!sparkleRush && sparkles.length > 60) {
+        sparkles = sparkles.slice(0, 60);
+    }
+
     sparkles.forEach(s => {
         s.opacity += s.twinkleSpeed * s.twinkleDir;
         if (s.opacity >= 1 || s.opacity <= 0.1) s.twinkleDir *= -1;
