@@ -239,7 +239,7 @@
             display: inline-block;
             background: linear-gradient(135deg, #00e5ff, #00e676, #00e5ff);
             background-size: 200% 200%;
-            animation: quizFlash 2s ease-in-out infinite;
+            animation: quizFlash 2s ease-in-out infinite, zineFloat 3s ease-in-out infinite;
             color: #000 !important;
             text-decoration: none;
             padding: 12px 32px;
@@ -249,6 +249,16 @@
             font-weight: 600;
             position: relative;
             overflow: hidden;
+            filter: drop-shadow(0 0 8px rgba(0,229,118,0.8)) drop-shadow(0 0 18px rgba(0,229,255,0.5));
+            margin-top: 10px;
+        }
+
+        @keyframes zineFloat {
+            0%   { transform: translate(0px, 0px); }
+            25%  { transform: translate(2px, -4px); }
+            50%  { transform: translate(0px, -6px); }
+            75%  { transform: translate(-2px, -4px); }
+            100% { transform: translate(0px, 0px); }
         }
 
         @keyframes quizFlash {
